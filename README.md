@@ -20,16 +20,16 @@ let src = reg.get("sky", alice_shader::registry::ShaderLang::Wgsl).unwrap();
 
 | Name | GLSL | WGSL | Origin |
 |------|------|------|--------|
-| noise | hash, vnoise, fbm | — | alice-universe.glsl |
-| terrain | biome system (snow/desert/rock/grass) | — | alice-universe.glsl |
-| sdf_primitives | sphere, box, capsule | — | alice-universe.glsl |
+| noise | hash, vnoise, fbm | hash, vnoise, fbm | alice-universe.glsl |
+| terrain | biome system (dot-product sector weights) | — | alice-universe.glsl |
+| sdf_primitives | sphere, box, torus, cylinder, gyroid, smin | sphere, box, torus, cylinder, gyroid, smin | alice-universe.glsl |
 | vfx | domain warping, fractal folding | — | alice-universe.glsl |
-| pbr | Cook-Torrance, materials | — | alice-universe.glsl |
-| sky | Rayleigh/Mie, clouds, stars | sky.wgsl | alice-universe.glsl |
+| pbr | 18 materials (int-indexed branching) | — | alice-universe.glsl |
+| sky | Rayleigh/Mie, ozone, moon, stars, aurora, clouds | Rayleigh/Mie, ozone, moon, stars, milky way, clouds | alice-universe.glsl |
 | gbuffer_vertex | — | MVP transform | ALICE-GameEngine |
 | gbuffer_fragment | — | PBR material output | ALICE-GameEngine |
-| sdf_raymarch | — | sphere tracing | ALICE-GameEngine |
-| deferred_lighting | — | 16-light deferred | ALICE-GameEngine |
+| sdf_raymarch | — | sphere tracing, gradient normals, soft shadow, AO | ALICE-GameEngine |
+| deferred_lighting | — | Cook-Torrance BRDF, 16 lights | ALICE-GameEngine |
 
 ## References
 

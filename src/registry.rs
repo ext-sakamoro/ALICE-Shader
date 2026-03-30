@@ -1,7 +1,5 @@
 //! Shader registry: look up shaders by name and target language.
 
-use std::collections::HashMap;
-
 /// Target shader language.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ShaderLang {
@@ -10,98 +8,78 @@ pub enum ShaderLang {
 }
 
 /// A shader entry in the registry.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct ShaderEntry {
-    pub name: String,
+    pub name: &'static str,
     pub lang: ShaderLang,
     pub source: &'static str,
 }
 
+const GLSL_ENTRIES: &[(&str, &str)] = &[
+    ("noise", crate::glsl::NOISE),
+    ("terrain", crate::glsl::TERRAIN),
+    ("sdf_primitives", crate::glsl::SDF_PRIMITIVES),
+    ("vfx", crate::glsl::VFX),
+    ("pbr", crate::glsl::PBR),
+    ("sky", crate::glsl::SKY),
+];
+
+const WGSL_ENTRIES: &[(&str, &str)] = &[
+    ("noise", crate::wgsl::NOISE),
+    ("gbuffer_vertex", crate::wgsl::GBUFFER_VERTEX),
+    ("gbuffer_fragment", crate::wgsl::GBUFFER_FRAGMENT),
+    ("sdf_primitives", crate::wgsl::SDF_PRIMITIVES),
+    ("sdf_raymarch", crate::wgsl::SDF_RAYMARCH),
+    ("deferred_lighting", crate::wgsl::DEFERRED_LIGHTING),
+    ("sky", crate::wgsl::SKY),
+];
+
 /// Registry of all available shaders.
-pub struct ShaderRegistry {
-    entries: HashMap<(String, ShaderLang), &'static str>,
-}
+pub struct ShaderRegistry;
 
 impl ShaderRegistry {
-    /// Creates a registry pre-loaded with all built-in shaders.
+    /// Creates a registry (zero-allocation, all lookups are static).
     #[must_use]
     pub fn builtin() -> Self {
-        let mut entries = HashMap::new();
-        let add = |m: &mut HashMap<(String, ShaderLang), &'static str>,
-                   name: &str,
-                   lang: ShaderLang,
-                   src: &'static str| {
-            m.insert((name.to_string(), lang), src);
-        };
-
-        // GLSL
-        add(&mut entries, "noise", ShaderLang::Glsl, crate::glsl::NOISE);
-        add(
-            &mut entries,
-            "terrain",
-            ShaderLang::Glsl,
-            crate::glsl::TERRAIN,
-        );
-        add(
-            &mut entries,
-            "sdf_primitives",
-            ShaderLang::Glsl,
-            crate::glsl::SDF_PRIMITIVES,
-        );
-        add(&mut entries, "vfx", ShaderLang::Glsl, crate::glsl::VFX);
-        add(&mut entries, "pbr", ShaderLang::Glsl, crate::glsl::PBR);
-        add(&mut entries, "sky", ShaderLang::Glsl, crate::glsl::SKY);
-
-        // WGSL
-        add(
-            &mut entries,
-            "gbuffer_vertex",
-            ShaderLang::Wgsl,
-            crate::wgsl::GBUFFER_VERTEX,
-        );
-        add(
-            &mut entries,
-            "gbuffer_fragment",
-            ShaderLang::Wgsl,
-            crate::wgsl::GBUFFER_FRAGMENT,
-        );
-        add(
-            &mut entries,
-            "sdf_raymarch",
-            ShaderLang::Wgsl,
-            crate::wgsl::SDF_RAYMARCH,
-        );
-        add(
-            &mut entries,
-            "deferred_lighting",
-            ShaderLang::Wgsl,
-            crate::wgsl::DEFERRED_LIGHTING,
-        );
-        add(&mut entries, "sky", ShaderLang::Wgsl, crate::wgsl::SKY);
-
-        Self { entries }
+        Self
     }
 
     /// Looks up a shader by name and language.
     #[must_use]
     pub fn get(&self, name: &str, lang: ShaderLang) -> Option<&'static str> {
-        self.entries.get(&(name.to_string(), lang)).copied()
+        let entries = match lang {
+            ShaderLang::Glsl => GLSL_ENTRIES,
+            ShaderLang::Wgsl => WGSL_ENTRIES,
+        };
+        entries.iter().find(|(n, _)| *n == name).map(|(_, s)| *s)
     }
 
     /// Returns all shader names for a given language.
     #[must_use]
-    pub fn names(&self, lang: ShaderLang) -> Vec<&str> {
-        self.entries
-            .keys()
-            .filter(|(_, l)| *l == lang)
-            .map(|(n, _)| n.as_str())
-            .collect()
+    pub fn names(&self, lang: ShaderLang) -> Vec<&'static str> {
+        let entries = match lang {
+            ShaderLang::Glsl => GLSL_ENTRIES,
+            ShaderLang::Wgsl => WGSL_ENTRIES,
+        };
+        entries.iter().map(|(n, _)| *n).collect()
+    }
+
+    /// Iterates over all shader entries across both languages.
+    pub fn iter(&self) -> impl Iterator<Item = ShaderEntry> {
+        GLSL_ENTRIES
+            .iter()
+            .map(|(n, s)| ShaderEntry { name: n, lang: ShaderLang::Glsl, source: s })
+            .chain(
+                WGSL_ENTRIES
+                    .iter()
+                    .map(|(n, s)| ShaderEntry { name: n, lang: ShaderLang::Wgsl, source: s }),
+            )
     }
 
     /// Total entries.
     #[must_use]
     pub fn count(&self) -> usize {
-        self.entries.len()
+        GLSL_ENTRIES.len() + WGSL_ENTRIES.len()
     }
 }
 
@@ -112,7 +90,7 @@ mod tests {
     #[test]
     fn builtin_has_entries() {
         let reg = ShaderRegistry::builtin();
-        assert!(reg.count() >= 11);
+        assert!(reg.count() >= 13);
     }
 
     #[test]
@@ -125,6 +103,18 @@ mod tests {
     fn lookup_sky_wgsl() {
         let reg = ShaderRegistry::builtin();
         assert!(reg.get("sky", ShaderLang::Wgsl).is_some());
+    }
+
+    #[test]
+    fn lookup_noise_wgsl() {
+        let reg = ShaderRegistry::builtin();
+        assert!(reg.get("noise", ShaderLang::Wgsl).is_some());
+    }
+
+    #[test]
+    fn lookup_sdf_primitives_wgsl() {
+        let reg = ShaderRegistry::builtin();
+        assert!(reg.get("sdf_primitives", ShaderLang::Wgsl).is_some());
     }
 
     #[test]
@@ -144,6 +134,22 @@ mod tests {
     fn wgsl_names() {
         let reg = ShaderRegistry::builtin();
         let names = reg.names(ShaderLang::Wgsl);
-        assert!(names.len() >= 5);
+        assert!(names.len() >= 7);
+    }
+
+    #[test]
+    fn iter_yields_all() {
+        let reg = ShaderRegistry::builtin();
+        let entries: Vec<_> = reg.iter().collect();
+        assert_eq!(entries.len(), reg.count());
+        assert!(entries.iter().all(|e| !e.source.is_empty()));
+    }
+
+    #[test]
+    fn iter_entry_fields() {
+        let reg = ShaderRegistry::builtin();
+        let sky = reg.iter().find(|e| e.name == "sky" && e.lang == ShaderLang::Glsl);
+        assert!(sky.is_some());
+        assert!(sky.unwrap().source.contains("Rayleigh") || sky.unwrap().source.contains("rayleigh"));
     }
 }

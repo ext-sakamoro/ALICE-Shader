@@ -3,7 +3,8 @@ struct Mat{vec3 albedo;float metallic;float roughness;vec3 emission;float sss;};
 
 Mat getMat(float id,vec3 p){
   Mat m;m.emission=vec3(0);m.sss=0.0;
-  if(id<0.5){
+  int mid=int(id+0.5);
+  if(mid==0){
     vec4 bw=biomeWeights(p.xz);
     // ── 雪原 (Lobby): 青色ノイズ積雪 + SSS 0.8 ──
     float snowN=vnoise(p.xz*2.0)*0.03;
@@ -74,7 +75,7 @@ Mat getMat(float id,vec3 p){
       m.roughness=mix(m.roughness,0.01,puddle);
       m.albedo=mix(m.albedo,m.albedo*0.6,puddle); // 水面は暗く
     }
-  }else if(id<1.5){
+  }else if(mid==1){
     // Energy Orb — branchless zone color via step masks
     float zN=step(p.z,-20.0);float xP=step(20.0,p.x)*(1.0-zN);float zP=step(20.0,p.z)*(1.0-zN)*(1.0-xP);float xN=step(p.x,-20.0)*(1.0-zN)*(1.0-xP)*(1.0-zP);float ctr=1.0-zN-xP-zP-xN;
     vec3 oC1=vec3(0.1,0.25,1.0)*zN+vec3(0.0,0.55,0.7)*xP+vec3(0.85,0.55,0.05)*zP+vec3(0.7,0.06,0.4)*xN+vec3(0.4,0.06,0.7)*ctr;
@@ -88,7 +89,7 @@ Mat getMat(float id,vec3 p){
     float arc=dbmDischarge(p,p-vec3(0,0.5,0),1.5+sin(uTime*1.8)*0.5,uTime*2.0);
     m.emission+=vec3(1.0,1.0,1.2)*SAT(arc-0.5)*8.0;
     m.emission+=mix(oC1,oC2,0.5)*0.4;m.sss=0.6;
-  }else if(id<2.5){
+  }else if(mid==2){
     float brush=vnoise(vec2(p.y*40.0,atan(p.x,p.z)*12.0))*0.08;
     m.albedo=vec3(0.74,0.74,0.76)+brush;m.metallic=0.97;m.roughness=0.06+brush*0.4;
     m.emission=vec3(0.04,0.18,0.4)*0.12;
@@ -96,7 +97,7 @@ Mat getMat(float id,vec3 p){
     vec3 fp2=abs(fract(p*8.0)-0.5);float fold2=min(fp2.x,min(fp2.y,fp2.z));
     m.roughness+=smoothstep(0.02,0.0,fold2)*0.15;
     m.emission+=vec3(0.02,0.08,0.2)*smoothstep(0.01,0.0,fold2)*0.3;
-  }else if(id<3.5){
+  }else if(mid==3){
     m.albedo=vec3(0.015,0.03,0.07);m.metallic=0.04;m.roughness=0.015;m.sss=0.55;
     float scan=smoothstep(0.4,0.5,sin(p.y*10.0+uTime*2.0)*0.5+0.5);
     float data=step(0.97,hash(floor(vec2(p.x*4.0,p.y*20.0-uTime*3.0))));
@@ -104,39 +105,39 @@ Mat getMat(float id,vec3 p){
     m.emission=vec3(0.08,0.25,0.75)*0.35+vec3(0.04,0.12,0.45)*scan*0.35+vec3(0.25,0.6,1.0)*data*0.9+vec3(0.06,0.2,0.65)*edge*0.25;
     // Interior mapping — pseudo-rooms behind glass panels
     vec3 iRoom=interiorMap(p,1.2);m.emission+=iRoom*0.6;
-  }else if(id<4.5){
+  }else if(mid==4){
     m.albedo=vec3(0.02,0.055,0.075)+vnoise3(p*2.0)*0.015;m.metallic=0.12;m.roughness=0.04;m.sss=0.35;
     m.emission=vec3(0.0,0.38,0.65)*0.28+vec3(0.0,0.5,0.85)*(sin(p.y*4.0)*0.5+0.5)*0.12;
     vec3 iRoom2=interiorMap(p,0.8);m.emission+=iRoom2*0.4;
-  }else if(id<5.5){
+  }else if(mid==5){
     float d=vnoise3(p*18.0);m.albedo=vec3(0.88,0.68,0.22)+d*0.04;m.metallic=0.94;m.roughness=0.22+d*0.1;
-  }else if(id<6.5){
+  }else if(mid==6){
     m.albedo=vec3(0.95,0.82,0.35);m.metallic=0.99;m.roughness=0.015;
     float sp=pow(max(sin(p.x*20.0+uTime*4.0)*sin(p.y*20.0-uTime*3.0)*sin(p.z*20.0+uTime*2.0),0.0),8.0);
     m.emission=vec3(0.8,0.55,0.1)*(0.35+0.25*sin(uTime*3.0))+vec3(1.0,0.9,0.6)*sp*0.5;
-  }else if(id<7.5){
+  }else if(mid==7){
     float pl=vnoise3(p*4.0+vec3(uTime*0.6,uTime*0.4,uTime*0.8));
     m.albedo=vec3(0.2,0.02,0.12);m.metallic=0.45;m.roughness=0.08;
     m.emission=mix(vec3(1.0,0.1,0.55),vec3(0.35,0.1,1.0),pl)*(0.55+0.35*sin(uTime*2.5+pl*5.0));
-  }else if(id<8.5){
+  }else if(mid==8){
     float pu=sin(uTime*3.0+length(p)*2.5)*0.5+0.5;
     m.albedo=vec3(0.12,0.35,0.55);m.metallic=0.2;m.roughness=0.05;
     m.emission=vec3(0.35,0.7,1.3)*(0.5+pu*0.5);m.sss=0.85;
-  }else if(id<9.5){
+  }else if(mid==9){
     float d=vnoise3(p*6.0)*0.04;float md=vnoise3(p*40.0)*0.002;m.albedo=vec3(0.04+d+md,0.042+d+md,0.055+d+md);m.metallic=0.88;m.roughness=0.28+md*2.0;
     m.emission=vec3(0.02,0.1,0.22)*0.12;
-  }else if(id<10.5){
+  }else if(mid==10){
     float md10=vnoise3(p*40.0)*0.002;m.albedo=vec3(0.68+md10,0.7+md10,0.72+md10);m.metallic=0.98;m.roughness=0.04+abs(md10)*3.0;m.emission=vec3(0.04,0.18,0.42)*0.18;
     // Fractal folding ornament
     vec3 fp10=abs(fract(p*12.0)-0.5);float fold10=min(fp10.x,min(fp10.y,fp10.z));
     m.emission+=vec3(0.03,0.12,0.3)*smoothstep(0.015,0.0,fold10)*0.25;
-  }else if(id<11.5){
+  }else if(mid==11){
     m.albedo=vec3(0.08,0.15,0.25);m.metallic=0.0;m.roughness=0.5;
     m.emission=vec3(0.15,0.55,1.0)*(0.85+0.15*sin(uTime*5.0+p.y*2.0));
-  }else if(id<12.5){
+  }else if(mid==12){
     m.albedo=vec3(0.01,0.04,0.06);m.metallic=0.05;m.roughness=0.08;m.sss=0.8;
     m.emission=vec3(0.0,0.55,0.9)*0.5*(sin(p.y*2.0+uTime*1.5)*0.5+0.5)+vec3(0.1,0.3,0.7)*0.2;
-  }else if(id<14.5){
+  }else if(mid<=14){
     // Meteor core — blackbody radiation (8000K core → 3000K surface)
     float plasma=fbm3(p*0.8+vec3(uTime*0.5,uTime*2.5,uTime*0.8));
     float vortex=fbm3(p*1.5+vec3(sin(uTime*0.3)*3.0,uTime*4.0,cos(uTime*0.2)*2.0));
@@ -144,7 +145,7 @@ Mat getMat(float id,vec3 p){
     m.albedo=vec3(0.02);m.metallic=0.0;m.roughness=0.95;
     vec3 bbCol=blackbody(coreTemp);
     m.emission=bbCol*mix(12.0,20.0,plasma)+blackbody(12000.0)*pow(max(vortex,0.0),2.0)*8.0;
-  }else if(id<15.5){
+  }else if(mid==15){
     // Meteor tail — blackbody cooling gradient (6000K→1500K)
     float streak=fbm3(p*vec3(4.0,0.2,4.0)+vec3(0,uTime*8.0,0));
     float tailTemp=mix(6000.0,1500.0,streak);
@@ -152,12 +153,12 @@ Mat getMat(float id,vec3 p){
     vec3 tailBB=blackbody(tailTemp);
     float pulse=pow(max(sin(p.y*0.5+uTime*3.0)*0.5+0.5,0.0),2.0);
     m.emission=tailBB*mix(8.0,15.0,1.0-streak)+blackbody(4500.0)*pulse*4.0;
-  }else if(id<16.5){
+  }else if(mid==16){
     m.albedo=vec3(0.96,0.97,1.0);m.metallic=0.02;m.roughness=0.008;m.sss=0.85;
     m.emission=vec3(0.04,0.08,0.15)*0.08;
     float sh=max(uShatter,(uEntropy-0.5)*0.15);
     if(sh>0.005){vec3 fr=fract(p*2.5);vec3 df=min(fr,1.0-fr);float e=min(df.x,min(df.y,df.z));float ck=smoothstep(0.12*sh,0.0,e);m.emission+=mix(vec3(1.5,0.6,0.12),vec3(0.3,0.6,1.2),1.0-uEntropy)*ck*sh*6.0;m.albedo*=1.0-ck*0.3;}
-  }else if(id<17.5){
+  }else if(mid==17){
     // Energy Ring — branchless zone color via step masks
     float rzN=step(p.z,-20.0);float rxP=step(20.0,p.x)*(1.0-rzN);float rzP=step(20.0,p.z)*(1.0-rzN)*(1.0-rxP);float rxN=step(p.x,-20.0)*(1.0-rzN)*(1.0-rxP)*(1.0-rzP);float rctr=1.0-rzN-rxP-rzP-rxN;
     vec3 rC=vec3(0.25,0.5,1.5)*rzN+vec3(0.1,0.8,0.9)*rxP+vec3(1.0,0.7,0.15)*rzP+vec3(0.9,0.15,0.55)*rxN+vec3(0.5,0.15,1.0)*rctr;
@@ -166,7 +167,7 @@ Mat getMat(float id,vec3 p){
     m.emission=rC*(2.5+flow*2.0);
     float spark=pow(max(vnoise3(p*20.0+uTime*5.0),0.0),10.0);
     m.emission+=vec3(1.0,1.0,1.2)*spark*8.0;
-  }else if(id<18.5){
+  }else if(mid==18){
     // Debris — fractured concrete + thermal glow (Law of Entropy: phase change)
     float heat=SAT(uShatter*2.0-0.3);
     float grain=vnoise3(p*12.0)*0.08;

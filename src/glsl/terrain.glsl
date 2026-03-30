@@ -8,18 +8,21 @@ float angleDist(float a,float b){
 }
 vec4 biomeWeights(vec2 xz){
   float dist=length(xz);
-  float ang=atan(xz.y,xz.x); // -PI..PI
-  // セクター中心角 (上から時計回り)
-  // NE(12-3時)=+PI/4, SE(3-6時)=-PI/4, SW(6-9時)=-3PI/4, NW(9-12時)=+3PI/4
-  float aSnow=PI*0.25;
-  float aRock=-PI*0.25;
-  float aDesert=-PI*0.75;
-  float aGrass=PI*0.75;
-  // 角度距離のガウシアン重み (シャープネス=3.0 → 90°セクターにフィット)
-  float wS=exp(-angleDist(ang,aSnow)*angleDist(ang,aSnow)*3.0);
-  float wR=exp(-angleDist(ang,aRock)*angleDist(ang,aRock)*3.0);
-  float wD=exp(-angleDist(ang,aDesert)*angleDist(ang,aDesert)*3.0);
-  float wG=exp(-angleDist(ang,aGrass)*angleDist(ang,aGrass)*3.0);
+  // dot product sector weights (atan/exp 排除)
+  // セクター中心方向ベクトル (単位ベクトル)
+  float invLen=1.0/(dist+0.001);
+  vec2 dir=xz*invLen;
+  // NE(Snow)=(+,+)/√2, SE(Rock)=(+,-)/√2, SW(Desert)=(-,-)/√2, NW(Grass)=(-,+)/√2
+  const float R2=0.70710678; // 1/√2
+  float cosS=dot(dir,vec2( R2, R2)); // Snow NE
+  float cosR=dot(dir,vec2( R2,-R2)); // Rock SE
+  float cosD=dot(dir,vec2(-R2,-R2)); // Desert SW
+  float cosG=dot(dir,vec2(-R2, R2)); // Grass NW
+  // smoothstep 近似 (cos>0 → 近い、cos<0 → 遠い)
+  float wS=smoothstep(-0.3,1.0,cosS);wS*=wS;
+  float wR=smoothstep(-0.3,1.0,cosR);wR*=wR;
+  float wD=smoothstep(-0.3,1.0,cosD);wD*=wD;
+  float wG=smoothstep(-0.3,1.0,cosG);wG*=wG;
   // 中央ハブ: 半径8m以内は全バイオーム均等融合
   float hub=smoothstep(12.0,5.0,dist);
   wS=mix(wS,1.0,hub);wR=mix(wR,1.0,hub);
