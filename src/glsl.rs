@@ -36,7 +36,10 @@ mod tests {
         assert!(TERRAIN.contains("biomeWeights"));
         assert!(TERRAIN.contains("terrainHeight"));
         assert!(TERRAIN.contains("voronoiErosion"));
-        assert!(!TERRAIN.contains("atan("), "terrain should use dot-product, not atan");
+        assert!(
+            !TERRAIN.contains("atan("),
+            "terrain should use dot-product, not atan"
+        );
     }
 
     #[test]

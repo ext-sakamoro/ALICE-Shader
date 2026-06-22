@@ -68,12 +68,16 @@ impl ShaderRegistry {
     pub fn iter(&self) -> impl Iterator<Item = ShaderEntry> {
         GLSL_ENTRIES
             .iter()
-            .map(|(n, s)| ShaderEntry { name: n, lang: ShaderLang::Glsl, source: s })
-            .chain(
-                WGSL_ENTRIES
-                    .iter()
-                    .map(|(n, s)| ShaderEntry { name: n, lang: ShaderLang::Wgsl, source: s }),
-            )
+            .map(|(n, s)| ShaderEntry {
+                name: n,
+                lang: ShaderLang::Glsl,
+                source: s,
+            })
+            .chain(WGSL_ENTRIES.iter().map(|(n, s)| ShaderEntry {
+                name: n,
+                lang: ShaderLang::Wgsl,
+                source: s,
+            }))
     }
 
     /// Total entries.
@@ -148,8 +152,12 @@ mod tests {
     #[test]
     fn iter_entry_fields() {
         let reg = ShaderRegistry::builtin();
-        let sky = reg.iter().find(|e| e.name == "sky" && e.lang == ShaderLang::Glsl);
+        let sky = reg
+            .iter()
+            .find(|e| e.name == "sky" && e.lang == ShaderLang::Glsl);
         assert!(sky.is_some());
-        assert!(sky.unwrap().source.contains("Rayleigh") || sky.unwrap().source.contains("rayleigh"));
+        assert!(
+            sky.unwrap().source.contains("Rayleigh") || sky.unwrap().source.contains("rayleigh")
+        );
     }
 }

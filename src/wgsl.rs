@@ -89,7 +89,10 @@ mod tests {
             ("deferred_lighting", DEFERRED_LIGHTING),
             ("sky", SKY),
         ] {
-            assert!(src.contains("fn "), "WGSL shader '{name}' missing 'fn' keyword");
+            assert!(
+                src.contains("fn "),
+                "WGSL shader '{name}' missing 'fn' keyword"
+            );
         }
     }
 
