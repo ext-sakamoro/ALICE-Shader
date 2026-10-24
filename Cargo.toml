@@ -1,8 +1,9 @@
 [package]
 name = "alice-shader"
+publish = false
 version = "0.1.0"
 edition = "2021"
-license = "MIT OR LicenseRef-Commercial"
+license = "LicenseRef-Proprietary"
 description = "Unified shader library for ALICE Eco-System — GLSL + WGSL (frozen; SDF primitives superseded by alice-sdf transpiler)"
 repository = "https://github.com/ext-sakamoro/ALICE-Shader"
 authors = ["Moroya Sakamoto <sakamoro@alicelaw.net>"]

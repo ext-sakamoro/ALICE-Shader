@@ -48,4 +48,6 @@ let src = reg.get("sky", alice_shader::registry::ShaderLang::Wgsl).unwrap();
 
 ## License
 
-MIT OR Commercial
+`LicenseRef-Proprietary`. The text is [LICENSE-Proprietary](LICENSE-Proprietary).
+
+Enquiries: https://extoria.co.jp/
